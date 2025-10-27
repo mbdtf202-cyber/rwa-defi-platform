@@ -1,9 +1,14 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { setupSwagger } from './config/swagger.config';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  
+  // API prefix
+  app.setGlobalPrefix('api/v1');
   
   // Enable CORS
   app.enableCors({
@@ -17,17 +22,24 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
   
-  // API prefix
-  app.setGlobalPrefix('api/v1');
+  // Swagger documentation
+  if (process.env.NODE_ENV !== 'production') {
+    setupSwagger(app);
+    logger.log('📚 Swagger documentation available at /api');
+  }
   
   const port = process.env.PORT || 3000;
   await app.listen(port);
   
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`📚 API docs: http://localhost:${port}/api/v1`);
+  logger.log(`🚀 Server running on http://localhost:${port}`);
+  logger.log(`📚 API docs: http://localhost:${port}/api`);
+  logger.log(`❤️  Health check: http://localhost:${port}/health`);
 }
 
 bootstrap();
