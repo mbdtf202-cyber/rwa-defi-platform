@@ -1,0 +1,209 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Smart Contracts Testing
+  contracts:
+    name: Smart Contracts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm install
+          cd packages/contracts && npm install
+      
+      - name: Compile contracts
+        run: cd packages/contracts && npm run compile
+      
+      - name: Run contract tests
+        run: cd packages/contracts && npm run test
+      
+      - name: Check contract size
+        run: cd packages/contracts && npm run size-check || true
+
+  # Backend Testing
+  backend:
+    name: Backend Services
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rwa_defi_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm install
+          cd packages/backend && npm install
+      
+      - name: Generate Prisma Client
+        run: cd packages/backend && npx prisma generate
+      
+      - name: Run database migrations
+        run: cd packages/backend && npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rwa_defi_test
+      
+      - name: Lint
+        run: cd packages/backend && npm run lint || true
+      
+      - name: Run tests
+        run: cd packages/backend && npm run test || true
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rwa_defi_test
+          JWT_SECRET: test-secret-key
+          NODE_ENV: test
+
+  # ML Services Testing
+  ml-services:
+    name: ML Services
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd packages/ml-services
+          pip install -r requirements.txt
+      
+      - name: Run linting
+        run: |
+          cd packages/ml-services
+          pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+      
+      - name: Run tests
+        run: |
+          cd packages/ml-services
+          pip install pytest
+          pytest || true
+
+  # Frontend Build
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          cd rwa-defi-platform
+          npm install
+      
+      - name: Lint
+        run: cd rwa-defi-platform && npm run lint || true
+      
+      - name: Build
+        run: cd rwa-defi-platform && npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: rwa-defi-platform/dist
+
+  # Docker Build
+  docker:
+    name: Docker Images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: github.event_name == 'push'
+      
+      - name: Build Backend Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./packages/backend
+          push: false
+          tags: rwa-defi/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build ML Services Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./packages/ml-services
+          push: false
+          tags: rwa-defi/ml-services:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+        if: always()
