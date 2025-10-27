@@ -1,0 +1,194 @@
+// Prisma schema for RWA DeFi Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  walletAddress   String?   @unique
+  kycStatus       KYCStatus @default(PENDING)
+  kycHash         String?
+  kycProvider     String?
+  kycCompletedAt  DateTime?
+  userType        UserType  @default(INDIVIDUAL)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  transactions    Transaction[]
+  auditLogs       AuditLog[]
+  
+  @@index([email])
+  @@index([walletAddress])
+  @@index([kycStatus])
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum UserType {
+  INDIVIDUAL
+  INSTITUTIONAL
+}
+
+model SPV {
+  id                    String     @id @default(uuid())
+  companyName           String
+  jurisdiction          String
+  legalRepresentative   String
+  registrationNumber    String     @unique
+  tokenAddress          String?    @unique
+  custodyAccount        String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  
+  properties            Property[]
+  documents             Document[]
+  valuations            Valuation[]
+  
+  @@index([tokenAddress])
+}
+
+model Property {
+  id              String    @id @default(uuid())
+  spvId           String
+  address         String
+  type            PropertyType
+  area            Decimal
+  purchasePrice   Decimal
+  currentValue    Decimal?
+  occupancyRate   Decimal?
+  monthlyRent     Decimal?
+  lat             Decimal?
+  lon             Decimal?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  spv             SPV       @relation(fields: [spvId], references: [id])
+  documents       Document[]
+  
+  @@index([spvId])
+  @@index([type])
+}
+
+enum PropertyType {
+  COMMERCIAL
+  RESIDENTIAL
+  MIXED
+}
+
+model Document {
+  id          String       @id @default(uuid())
+  entityType  EntityType
+  entityId    String
+  type        DocumentType
+  ipfsHash    String
+  onchainHash String?
+  fileName    String?
+  fileSize    BigInt?
+  uploadedBy  String
+  uploadedAt  DateTime     @default(now())
+  
+  spv         SPV?         @relation(fields: [entityId], references: [id])
+  property    Property?    @relation(fields: [entityId], references: [id])
+  
+  @@index([entityType, entityId])
+  @@index([ipfsHash])
+}
+
+enum EntityType {
+  SPV
+  PROPERTY
+  USER
+}
+
+enum DocumentType {
+  DEED
+  LEASE
+  AUDIT
+  KYC
+  OTHER
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  userId        String
+  type          TransactionType
+  tokenAddress  String
+  amount        Decimal
+  fromAddress   String?
+  toAddress     String?
+  txHash        String?           @unique
+  blockNumber   BigInt?
+  status        TransactionStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  confirmedAt   DateTime?
+  
+  user          User              @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([txHash])
+  @@index([status])
+}
+
+enum TransactionType {
+  MINT
+  BURN
+  TRANSFER
+  DIVIDEND
+  DEPOSIT
+  WITHDRAW
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model Valuation {
+  id              String   @id @default(uuid())
+  spvId           String
+  value           Decimal
+  lowerCI         Decimal?
+  upperCI         Decimal?
+  confidence      Decimal?
+  modelVersion    String
+  valuationDate   DateTime
+  createdAt       DateTime @default(now())
+  
+  spv             SPV      @relation(fields: [spvId], references: [id])
+  
+  @@index([spvId])
+  @@index([valuationDate])
+}
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  userId          String?
+  action          String
+  resource        String
+  resourceId      String?
+  ipAddress       String?
+  userAgent       String?
+  requestBody     Json?
+  responseStatus  Int
+  timestamp       DateTime @default(now())
+  
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([timestamp])
+  @@index([action])
+}
