@@ -24,16 +24,20 @@ model User {
   
   transactions    Transaction[]
   auditLogs       AuditLog[]
+  orders          Order[]
+  tokenHoldings   TokenHolding[]
 }
 
 model SPV {
   id                    String     @id @default(uuid())
+  name                  String?
   companyName           String
   jurisdiction          String
   legalRepresentative   String
   registrationNumber    String     @unique
   tokenAddress          String?    @unique
   custodyAccount        String?
+  totalValue            Float?
   status                String     @default("PENDING") // SPVStatus enum as string
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
@@ -42,26 +46,34 @@ model SPV {
   documents             Document[]
   transactions          Transaction[]
   valuations            Valuation[]
+  riskAssessments       RiskAssessment[]
 }
 
 model Property {
-  id              String    @id @default(uuid())
-  spvId           String
-  address         String
-  propertyType    String    // PropertyType enum as string
-  area            Float
-  bedrooms        Int?
-  bathrooms       Int?
-  yearBuilt       Int?
-  purchasePrice   Float
-  currentValue    Float?
-  monthlyRent     Float?
-  occupancyRate   Float?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                    String    @id @default(uuid())
+  spvId                 String
+  address               String
+  city                  String?
+  state                 String?
+  propertyType          String    // PropertyType enum as string
+  area                  Float
+  bedrooms              Int?
+  bathrooms             Int?
+  yearBuilt             Int?
+  purchasePrice         Float
+  currentValue          Float?
+  monthlyRent           Float?
+  occupancyRate         Float?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   
-  spv             SPV       @relation(fields: [spvId], references: [id])
-  valuations      Valuation[]
+  spv                   SPV       @relation(fields: [spvId], references: [id])
+  valuations            Valuation[]
+  maintenanceRecords    MaintenanceRecord[]
+  maintenancePredictions MaintenancePrediction[]
+  scheduledMaintenance  ScheduledMaintenance[]
 }
 
 model Document {
@@ -70,6 +82,8 @@ model Document {
   documentType    String    // DocumentType enum as string
   ipfsHash        String
   blockchainHash  String?
+  hash            String?
+  onChain         Boolean   @default(false)
   uploadedBy      String
   uploadedAt      DateTime  @default(now())
   verified        Boolean   @default(false)
@@ -86,6 +100,11 @@ model Transaction {
   type            String    // TransactionType enum as string
   amount          Float
   tokenAmount     Float?
+  tokenAddress    String?
+  fromAddress     String?
+  toAddress       String?
+  blockNumber     Int?
+  confirmedAt     DateTime?
   status          String    @default("PENDING") // TransactionStatus enum as string
   txHash          String?
   createdAt       DateTime  @default(now())
@@ -102,6 +121,11 @@ model Valuation {
   valuationType   String    // ValuationType enum as string
   value           Float
   confidence      Float?
+  lowerCI         Float?
+  upperCI         Float?
+  method          String?
+  modelVersion    String?
+  factors         String?   // JSON as string
   source          String
   valuationDate   DateTime  @default(now())
   createdAt       DateTime  @default(now())
@@ -116,10 +140,220 @@ model AuditLog {
   action          String
   entityType      String
   entityId        String
+  resource        String?
   changes         String?   // JSON as string
   ipAddress       String?
   userAgent       String?
+  responseStatus  Int?
+  timestamp       DateTime  @default(now())
   createdAt       DateTime  @default(now())
   
   user            User      @relation(fields: [userId], references: [id])
+}
+
+model Order {
+  id              String    @id @default(uuid())
+  userId          String
+  spvId           String
+  tokenAddress    String
+  orderType       String    // BUY or SELL
+  price           Float
+  quantity        Float
+  filled          Float     @default(0)
+  filledAmount    Float     @default(0)
+  status          String    @default("OPEN") // OPEN, FILLED, CANCELLED
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
+  trades          Trade[]
+}
+
+model Trade {
+  id              String    @id @default(uuid())
+  orderId         String
+  buyOrderId      String?
+  sellOrderId     String?
+  buyerId         String?
+  sellerId        String?
+  tokenAddress    String
+  price           Float
+  quantity        Float
+  buyerAddress    String
+  sellerAddress   String
+  txHash          String?
+  createdAt       DateTime  @default(now())
+  
+  order           Order     @relation(fields: [orderId], references: [id])
+}
+
+model TokenHolding {
+  id              String    @id @default(uuid())
+  userId          String
+  userAddress     String?
+  tokenAddress    String
+  spvId           String?
+  balance         Float
+  lockedBalance   Float     @default(0)
+  averagePrice    Float?
+  totalInvested   Float?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model Loan {
+  id              String    @id @default(uuid())
+  borrower        String
+  collateralToken String
+  collateralAmount Float
+  borrowAmount    Float
+  interestRate    Float
+  duration        Int
+  startDate       DateTime
+  endDate         DateTime
+  status          String    @default("ACTIVE") // ACTIVE, REPAID, LIQUIDATED
+  repaidAmount    Float     @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model MLPrediction {
+  id              String    @id @default(uuid())
+  modelType       String
+  entityId        String
+  entityType      String
+  prediction      String    // JSON as string
+  predictedValue  Float?
+  actualValue     Float?
+  confidence      Float
+  createdAt       DateTime  @default(now())
+}
+
+model Alert {
+  id              String    @id @default(uuid())
+  type            String
+  severity        String
+  title           String
+  message         String
+  entityType      String?
+  entityId        String?
+  metadata        String?   // JSON as string
+  acknowledged    Boolean   @default(false)
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  createdAt       DateTime  @default(now())
+}
+
+model RiskAssessment {
+  id              String    @id @default(uuid())
+  spvId           String
+  riskScore       Float
+  riskLevel       String
+  factors         String    // JSON as string
+  assessmentDate  DateTime  @default(now())
+  
+  spv             SPV       @relation(fields: [spvId], references: [id])
+}
+
+model MaintenanceRecord {
+  id              String    @id @default(uuid())
+  propertyId      String
+  type            String
+  description     String?
+  cost            Float?
+  urgency         String?
+  completedAt     DateTime
+  contractor      String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  
+  property        Property  @relation(fields: [propertyId], references: [id])
+}
+
+model MaintenancePrediction {
+  id              String    @id @default(uuid())
+  propertyId      String
+  type            String
+  predictedDate   DateTime
+  confidence      Float
+  estimatedCost   Float
+  urgency         String
+  description     String?
+  completed       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  
+  property        Property  @relation(fields: [propertyId], references: [id])
+}
+
+model ScheduledMaintenance {
+  id              String    @id @default(uuid())
+  propertyId      String
+  type            String
+  scheduledDate   DateTime
+  estimatedCost   Float?
+  urgency         String
+  description     String?
+  status          String    @default("SCHEDULED")
+  createdAt       DateTime  @default(now())
+  
+  property        Property  @relation(fields: [propertyId], references: [id])
+}
+
+model Investment {
+  id              String    @id @default(uuid())
+  userId          String
+  spvId           String
+  amount          Float?
+  tokenAmount     Float?
+  investmentDate  DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+}
+
+model BlockchainEvent {
+  id              String    @id @default(uuid())
+  eventType       String
+  contractAddress String
+  transactionHash String
+  blockNumber     Int
+  eventData       String    // JSON as string
+  processed       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+}
+
+model DividendDistribution {
+  id              String    @id @default(uuid())
+  spvId           String
+  tokenAddress    String
+  totalAmount     Float
+  perTokenAmount  Float
+  distributionDate DateTime
+  txHash          String?
+  status          String    @default("PENDING")
+  createdAt       DateTime  @default(now())
+}
+
+model VaultPosition {
+  id              String    @id @default(uuid())
+  userId          String
+  vaultAddress    String
+  tokenAddress    String
+  shares          Float
+  assets          Float
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Tranche {
+  id              String    @id @default(uuid())
+  spvId           String
+  name            String
+  symbol          String
+  tokenAddress    String
+  priority        Int
+  targetYield     Float
+  totalSupply     Float
+  createdAt       DateTime  @default(now())
 }

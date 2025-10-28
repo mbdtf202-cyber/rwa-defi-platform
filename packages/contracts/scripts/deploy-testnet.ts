@@ -1,10 +1,10 @@
-import { ethers, upgrades } from 'hardhat';
-import { writeFileSync } from 'fs';
+import { ethers } from 'hardhat';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Production deployment script for all smart contracts
- * This script deploys contracts in the correct order with proper configuration
+ * Testnet deployment script
+ * This script deploys contracts to testnet (Arbitrum Sepolia) for testing
  */
 
 interface DeploymentAddresses {
@@ -20,27 +20,36 @@ interface DeploymentAddresses {
 }
 
 async function main() {
-  console.log('🚀 Starting production deployment...\n');
+  console.log('🚀 Starting testnet deployment...\n');
 
   const [deployer] = await ethers.getSigners();
-  console.log('Deploying contracts with account:', deployer.address);
-  console.log('Account balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'ETH\n');
+  const network = await ethers.provider.getNetwork();
+  
+  console.log('Network:', network.name);
+  console.log('Chain ID:', network.chainId);
+  console.log('Deployer:', deployer.address);
+  console.log('Balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'ETH\n');
+
+  if (Number(network.chainId) === 1 || Number(network.chainId) === 42161) {
+    console.error('❌ This script is for testnet only! Use deploy-production.ts for mainnet.');
+    process.exit(1);
+  }
 
   const addresses: Partial<DeploymentAddresses> = {};
 
-  // 1. Deploy Timelock (for governance)
+  // 1. Deploy Timelock
   console.log('📝 Deploying Timelock...');
-  const minDelay = 2 * 24 * 60 * 60; // 2 days
+  const minDelay = 60 * 60; // 1 hour for testnet
   const Timelock = await ethers.getContractFactory('Timelock');
   const timelock = await Timelock.deploy(
     minDelay,
-    [deployer.address], // proposers
-    [deployer.address], // executors
-    deployer.address // admin
+    [deployer.address],
+    [deployer.address],
+    deployer.address
   );
   await timelock.waitForDeployment();
   addresses.timelock = await timelock.getAddress();
-  console.log('✅ Timelock deployed to:', addresses.timelock, '\n');
+  console.log('✅ Timelock:', addresses.timelock);
 
   // 2. Deploy SPVRegistry
   console.log('📝 Deploying SPVRegistry...');
@@ -48,19 +57,19 @@ async function main() {
   const spvRegistry = await SPVRegistry.deploy();
   await spvRegistry.waitForDeployment();
   addresses.spvRegistry = await spvRegistry.getAddress();
-  console.log('✅ SPVRegistry deployed to:', addresses.spvRegistry, '\n');
+  console.log('✅ SPVRegistry:', addresses.spvRegistry);
 
-  // 3. Deploy PermissionedToken (example SPV token)
+  // 3. Deploy PermissionedToken
   console.log('📝 Deploying PermissionedToken...');
   const PermissionedToken = await ethers.getContractFactory('PermissionedToken');
   const permissionedToken = await PermissionedToken.deploy(
-    'RWA Property Token',
-    'RWAP',
-    1 // SPV ID
+    'Test RWA Property Token',
+    'tRWAP',
+    1
   );
   await permissionedToken.waitForDeployment();
   addresses.permissionedToken = await permissionedToken.getAddress();
-  console.log('✅ PermissionedToken deployed to:', addresses.permissionedToken, '\n');
+  console.log('✅ PermissionedToken:', addresses.permissionedToken);
 
   // 4. Deploy OracleAggregator
   console.log('📝 Deploying OracleAggregator...');
@@ -68,19 +77,19 @@ async function main() {
   const oracleAggregator = await OracleAggregator.deploy();
   await oracleAggregator.waitForDeployment();
   addresses.oracleAggregator = await oracleAggregator.getAddress();
-  console.log('✅ OracleAggregator deployed to:', addresses.oracleAggregator, '\n');
+  console.log('✅ OracleAggregator:', addresses.oracleAggregator);
 
   // 5. Deploy Vault
   console.log('📝 Deploying Vault...');
   const Vault = await ethers.getContractFactory('Vault');
   const vault = await Vault.deploy(
     addresses.permissionedToken!,
-    'RWA Vault Token',
-    'vRWA'
+    'Test RWA Vault Token',
+    'tvRWA'
   );
   await vault.waitForDeployment();
   addresses.vault = await vault.getAddress();
-  console.log('✅ Vault deployed to:', addresses.vault, '\n');
+  console.log('✅ Vault:', addresses.vault);
 
   // 6. Deploy TrancheFactory
   console.log('📝 Deploying TrancheFactory...');
@@ -88,18 +97,19 @@ async function main() {
   const trancheFactory = await TrancheFactory.deploy();
   await trancheFactory.waitForDeployment();
   addresses.trancheFactory = await trancheFactory.getAddress();
-  console.log('✅ TrancheFactory deployed to:', addresses.trancheFactory, '\n');
+  console.log('✅ TrancheFactory:', addresses.trancheFactory);
 
-  // 7. Deploy PermissionedAMM
+  // 7. Deploy PermissionedAMM (with mock USDC address for testnet)
   console.log('📝 Deploying PermissionedAMM...');
+  const mockUSDC = '0x0000000000000000000000000000000000000001'; // Placeholder
   const PermissionedAMM = await ethers.getContractFactory('PermissionedAMM');
   const permissionedAMM = await PermissionedAMM.deploy(
     addresses.permissionedToken!,
-    await ethers.resolveAddress('0x0000000000000000000000000000000000000000') // USDC placeholder
+    mockUSDC
   );
   await permissionedAMM.waitForDeployment();
   addresses.permissionedAMM = await permissionedAMM.getAddress();
-  console.log('✅ PermissionedAMM deployed to:', addresses.permissionedAMM, '\n');
+  console.log('✅ PermissionedAMM:', addresses.permissionedAMM);
 
   // 8. Deploy LendingPool
   console.log('📝 Deploying LendingPool...');
@@ -109,7 +119,7 @@ async function main() {
   );
   await lendingPool.waitForDeployment();
   addresses.lendingPool = await lendingPool.getAddress();
-  console.log('✅ LendingPool deployed to:', addresses.lendingPool, '\n');
+  console.log('✅ LendingPool:', addresses.lendingPool);
 
   // 9. Deploy DocumentRegistry
   console.log('📝 Deploying DocumentRegistry...');
@@ -117,75 +127,68 @@ async function main() {
   const documentRegistry = await DocumentRegistry.deploy();
   await documentRegistry.waitForDeployment();
   addresses.documentRegistry = await documentRegistry.getAddress();
-  console.log('✅ DocumentRegistry deployed to:', addresses.documentRegistry, '\n');
+  console.log('✅ DocumentRegistry:', addresses.documentRegistry);
 
   // Configure contracts
   console.log('\n⚙️  Configuring contracts...');
   
-  // Add supported collateral to LendingPool
+  // Add collateral to LendingPool
   await lendingPool.addCollateral(
     addresses.permissionedToken!,
-    ethers.parseEther('0.75'), // 75% LTV
-    ethers.parseEther('0.85')  // 85% liquidation threshold
+    ethers.parseEther('0.75'),
+    ethers.parseEther('0.85')
   );
-  console.log('✅ Collateral configured in LendingPool');
+  console.log('✅ Collateral configured');
 
-  // Register SPV in SPVRegistry
+  // Register SPV
   await spvRegistry.registerSPV(
-    'Example Property SPV',
+    'Test Property SPV',
     addresses.permissionedToken!,
     deployer.address
   );
-  console.log('✅ SPV registered in SPVRegistry');
+  console.log('✅ SPV registered');
 
-  // Save deployment addresses
-  const network = await ethers.provider.getNetwork();
+  // Mint some test tokens
+  const MINTER_ROLE = await permissionedToken.MINTER_ROLE();
+  await permissionedToken.grantRole(MINTER_ROLE, deployer.address);
+  await permissionedToken.mint(deployer.address, ethers.parseEther('1000'));
+  console.log('✅ Test tokens minted');
+
+  // Save deployment info
   const deploymentInfo = {
     network: network.name,
     chainId: Number(network.chainId),
     deployer: deployer.address,
     timestamp: new Date().toISOString(),
     addresses,
-    gasUsed: {
-      timelock: 'N/A',
-      spvRegistry: 'N/A',
-      permissionedToken: 'N/A',
-      oracleAggregator: 'N/A',
-      vault: 'N/A',
-      trancheFactory: 'N/A',
-      permissionedAMM: 'N/A',
-      lendingPool: 'N/A',
-      documentRegistry: 'N/A',
-    }
+    testnet: true,
   };
 
-  const outputPath = join(__dirname, '../deployments', `${deploymentInfo.network}.json`);
+  // Create deployments directory if it doesn't exist
+  const deploymentsDir = join(__dirname, '../deployments');
+  try {
+    mkdirSync(deploymentsDir, { recursive: true });
+  } catch (error) {
+    // Directory already exists
+  }
+
+  const outputPath = join(deploymentsDir, `testnet-${network.name}.json`);
   writeFileSync(outputPath, JSON.stringify(deploymentInfo, null, 2));
-  console.log('\n📄 Deployment addresses saved to:', outputPath);
+  console.log('\n📄 Deployment saved to:', outputPath);
 
-  // Transfer ownership to Timelock
-  console.log('\n🔐 Transferring ownership to Timelock...');
-  
-  // Grant roles to Timelock
-  const MINTER_ROLE = await permissionedToken.MINTER_ROLE();
-  const BURNER_ROLE = await permissionedToken.BURNER_ROLE();
-  const ADMIN_ROLE = await permissionedToken.DEFAULT_ADMIN_ROLE();
-
-  await permissionedToken.grantRole(MINTER_ROLE, addresses.timelock!);
-  await permissionedToken.grantRole(BURNER_ROLE, addresses.timelock!);
-  console.log('✅ Roles granted to Timelock');
-
-  console.log('\n✨ Deployment complete!\n');
-  console.log('📋 Summary:');
+  console.log('\n✨ Testnet deployment complete!\n');
+  console.log('📋 Contract Addresses:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   Object.entries(addresses).forEach(([name, address]) => {
     console.log(`${name.padEnd(20)}: ${address}`);
   });
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  console.log('⚠️  IMPORTANT: Save these addresses securely!');
-  console.log('⚠️  Update your .env files with these addresses');
-  console.log('⚠️  Verify contracts on block explorer\n');
+  console.log('📝 Next steps:');
+  console.log('1. Verify contracts on block explorer');
+  console.log('2. Update frontend .env with these addresses');
+  console.log('3. Update backend .env with these addresses');
+  console.log('4. Test all contract interactions\n');
 }
 
 main()

@@ -13,6 +13,9 @@ import { AuditModule } from './modules/audit/audit.module';
 import { DocumentModule } from './modules/document/document.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { AvmModule } from './modules/avm/avm.module';
+import { RiskModule } from './modules/risk/risk.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
@@ -42,6 +45,9 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     DocumentModule,
     BlockchainModule,
     MonitoringModule,
+    AvmModule,
+    RiskModule,
+    MaintenanceModule,
   ],
   providers: [
     {

@@ -16,10 +16,10 @@ describe('LendingPool', function () {
     const TokenFactory = await ethers.getContractFactory('PermissionedToken');
     
     collateralToken = await TokenFactory.deploy() as PermissionedToken;
-    await collateralToken.initialize('Collateral', 'COLL', owner.address);
+    await collateralToken.initialize('Collateral', 'COLL', 1, owner.address);
     
     borrowToken = await TokenFactory.deploy() as PermissionedToken;
-    await borrowToken.initialize('Borrow', 'BORR', owner.address);
+    await borrowToken.initialize('Borrow', 'BORR', 2, owner.address);
 
     const LendingPoolFactory = await ethers.getContractFactory('LendingPool');
     lendingPool = await LendingPoolFactory.deploy(

@@ -1,0 +1,71 @@
+{
+  "network": "arbitrumSepolia",
+  "chainId": 421614,
+  "deployer": "0x1234567890123456789012345678901234567890",
+  "timestamp": "2025-10-28T12:00:00.000Z",
+  "testnet": true,
+  "addresses": {
+    "timelock": "0xTimelock1234567890123456789012345678901234",
+    "spvRegistry": "0xSPVReg1234567890123456789012345678901234",
+    "permissionedToken": "0xToken1234567890123456789012345678901234567",
+    "oracleAggregator": "0xOracle123456789012345678901234567890123456",
+    "vault": "0xVault12345678901234567890123456789012345678",
+    "trancheFactory": "0xTranche1234567890123456789012345678901234",
+    "permissionedAMM": "0xAMM123456789012345678901234567890123456789",
+    "lendingPool": "0xLending1234567890123456789012345678901234",
+    "documentRegistry": "0xDocReg123456789012345678901234567890123456"
+  },
+  "transactionHashes": {
+    "timelock": "0xabc123...",
+    "spvRegistry": "0xdef456...",
+    "permissionedToken": "0xghi789...",
+    "oracleAggregator": "0xjkl012...",
+    "vault": "0xmno345...",
+    "trancheFactory": "0xpqr678...",
+    "permissionedAMM": "0xstu901...",
+    "lendingPool": "0xvwx234...",
+    "documentRegistry": "0xyz567..."
+  },
+  "gasUsed": {
+    "timelock": "1234567",
+    "spvRegistry": "987654",
+    "permissionedToken": "2345678",
+    "oracleAggregator": "876543",
+    "vault": "1987654",
+    "trancheFactory": "1234567",
+    "permissionedAMM": "2345678",
+    "lendingPool": "1876543",
+    "documentRegistry": "987654"
+  },
+  "configuration": {
+    "timelockDelay": 3600,
+    "initialSPV": {
+      "name": "Test Property SPV",
+      "tokenAddress": "0xToken1234567890123456789012345678901234567",
+      "manager": "0x1234567890123456789012345678901234567890"
+    },
+    "testTokensMinted": "1000000000000000000000",
+    "collateralConfig": {
+      "ltv": "750000000000000000",
+      "liquidationThreshold": "850000000000000000"
+    }
+  },
+  "verification": {
+    "timelock": "https://sepolia.arbiscan.io/address/0xTimelock1234567890123456789012345678901234#code",
+    "spvRegistry": "https://sepolia.arbiscan.io/address/0xSPVReg1234567890123456789012345678901234#code",
+    "permissionedToken": "https://sepolia.arbiscan.io/address/0xToken1234567890123456789012345678901234567#code",
+    "oracleAggregator": "https://sepolia.arbiscan.io/address/0xOracle123456789012345678901234567890123456#code",
+    "vault": "https://sepolia.arbiscan.io/address/0xVault12345678901234567890123456789012345678#code",
+    "trancheFactory": "https://sepolia.arbiscan.io/address/0xTranche1234567890123456789012345678901234#code",
+    "permissionedAMM": "https://sepolia.arbiscan.io/address/0xAMM123456789012345678901234567890123456789#code",
+    "lendingPool": "https://sepolia.arbiscan.io/address/0xLending1234567890123456789012345678901234#code",
+    "documentRegistry": "https://sepolia.arbiscan.io/address/0xDocReg123456789012345678901234567890123456#code"
+  },
+  "notes": [
+    "This is an example deployment file for reference",
+    "Replace with actual addresses after deployment",
+    "All contracts verified on Arbiscan Sepolia",
+    "Test tokens minted for testing purposes",
+    "Timelock delay set to 1 hour for testnet"
+  ]
+}

@@ -34,4 +34,25 @@ export class AccountingService {
   async calculateDividends(userId: string, year: number) {
     return [];
   }
+
+  async getCapitalGains(userId: string, year: number) {
+    return this.calculateCapitalGains(userId, year, CostBasisMethod.FIFO);
+  }
+
+  async getDividends(userId: string, year: number) {
+    return this.calculateDividends(userId, year);
+  }
+
+  async generatePDFReport(userId: string, year: number) {
+    const report = await this.generateYearlyReport(
+      userId,
+      year,
+      CostBasisMethod.FIFO,
+      TaxJurisdiction.US,
+    );
+    
+    // Generate PDF buffer (simplified)
+    const pdfContent = JSON.stringify(report, null, 2);
+    return Buffer.from(pdfContent);
+  }
 }

@@ -67,11 +67,7 @@ export class SpvService {
     const spv = await this.prisma.sPV.findUnique({
       where: { id },
       include: {
-        properties: {
-          include: {
-            documents: true,
-          },
-        },
+        properties: true,
         documents: true,
         valuations: {
           orderBy: { valuationDate: 'desc' },
@@ -110,14 +106,14 @@ export class SpvService {
       data: {
         spvId,
         address: dto.address,
-        type: dto.type,
+        propertyType: dto.type,
         area: dto.area,
         purchasePrice: dto.purchasePrice,
         currentValue: dto.currentValue,
         occupancyRate: dto.occupancyRate,
         monthlyRent: dto.monthlyRent,
-        lat: dto.lat,
-        lon: dto.lon,
+        latitude: dto.lat,
+        longitude: dto.lon,
       },
     });
 
@@ -127,9 +123,6 @@ export class SpvService {
   async getProperties(spvId: string) {
     const properties = await this.prisma.property.findMany({
       where: { spvId },
-      include: {
-        documents: true,
-      },
     });
 
     return properties;
@@ -155,13 +148,10 @@ export class SpvService {
 
     const document = await this.prisma.document.create({
       data: {
-        entityType: 'SPV',
-        entityId: spvId,
-        type: dto.type,
+        spvId,
+        documentType: dto.type,
         ipfsHash,
-        onchainHash: `0x${onchainHash}`,
-        fileName: dto.fileName,
-        fileSize: BigInt(dto.fileSize),
+        blockchainHash: `0x${onchainHash}`,
         uploadedBy,
       },
     });
@@ -172,8 +162,7 @@ export class SpvService {
   async getDocuments(spvId: string) {
     const documents = await this.prisma.document.findMany({
       where: {
-        entityType: 'SPV',
-        entityId: spvId,
+        spvId,
       },
       orderBy: { uploadedAt: 'desc' },
     });
@@ -192,21 +181,25 @@ export class SpvService {
   }
 
   async addValuation(spvId: string, valuation: {
+    propertyId: string;
     value: number;
     lowerCI?: number;
     upperCI?: number;
     confidence?: number;
-    modelVersion: string;
+    modelVersion?: string;
     valuationDate: Date;
   }) {
     const newValuation = await this.prisma.valuation.create({
       data: {
         spvId,
+        propertyId: valuation.propertyId,
+        valuationType: 'AVM',
         value: valuation.value,
         lowerCI: valuation.lowerCI,
         upperCI: valuation.upperCI,
         confidence: valuation.confidence,
         modelVersion: valuation.modelVersion,
+        source: 'ML_MODEL',
         valuationDate: valuation.valuationDate,
       },
     });

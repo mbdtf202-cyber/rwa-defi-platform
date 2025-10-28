@@ -1,106 +1,126 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title DocumentRegistry
  * @dev Registry for storing document hashes on-chain for verification
  */
-contract DocumentRegistry is 
-    Initializable,
-    AccessControlUpgradeable,
-    UUPSUpgradeable
-{
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant UPLOADER_ROLE = keccak256("UPLOADER_ROLE");
+contract DocumentRegistry is Ownable, Pausable {
     
     struct Document {
-        bytes32 ipfsHash;
-        uint256 spvId;
+        string ipfsHash;
         string documentType;
+        string entityType;
+        uint256 entityId;
         uint256 timestamp;
         address uploader;
         bool verified;
+        bool revoked;
+        address verifier;
+        string revokeReason;
     }
     
-    mapping(bytes32 => Document) public documents;
-    mapping(uint256 => bytes32[]) public spvDocuments;
+    uint256 public documentCount;
+    mapping(uint256 => Document) public documents;
+    mapping(string => mapping(uint256 => uint256[])) public entityDocuments; // entityType => entityId => documentIds
+    mapping(address => uint256[]) public uploaderDocuments;
     
-    event DocumentStored(
-        bytes32 indexed documentHash,
-        uint256 indexed spvId,
+    event DocumentRegistered(
+        uint256 indexed documentId,
+        string ipfsHash,
         string documentType,
+        string entityType,
+        uint256 entityId,
         address uploader
     );
     
-    event DocumentVerified(bytes32 indexed documentHash, address verifier);
+    event DocumentVerified(uint256 indexed documentId, address verifier);
+    event DocumentRevoked(uint256 indexed documentId, address revoker, string reason);
     
-    constructor() {
-        _disableInitializers();
-    }
+    constructor() Ownable(msg.sender) {}
     
-    function initialize(address admin) public initializer {
-        __AccessControl_init();
-        __UUPSUpgradeable_init();
+    function registerDocument(
+        string calldata ipfsHash,
+        string calldata documentType,
+        string calldata entityType,
+        uint256 entityId
+    ) external whenNotPaused returns (uint256) {
+        require(bytes(ipfsHash).length > 0, "Invalid IPFS hash");
         
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(ADMIN_ROLE, admin);
-        _grantRole(UPLOADER_ROLE, admin);
-    }
-    
-    function storeDocument(
-        bytes32 documentHash,
-        bytes32 ipfsHash,
-        uint256 spvId,
-        string calldata documentType
-    ) external onlyRole(UPLOADER_ROLE) {
-        require(documents[documentHash].timestamp == 0, "Document already exists");
+        documentCount++;
+        uint256 documentId = documentCount;
         
-        documents[documentHash] = Document({
+        documents[documentId] = Document({
             ipfsHash: ipfsHash,
-            spvId: spvId,
             documentType: documentType,
+            entityType: entityType,
+            entityId: entityId,
             timestamp: block.timestamp,
             uploader: msg.sender,
-            verified: false
+            verified: false,
+            revoked: false,
+            verifier: address(0),
+            revokeReason: ""
         });
         
-        spvDocuments[spvId].push(documentHash);
+        entityDocuments[entityType][entityId].push(documentId);
+        uploaderDocuments[msg.sender].push(documentId);
         
-        emit DocumentStored(documentHash, spvId, documentType, msg.sender);
+        emit DocumentRegistered(documentId, ipfsHash, documentType, entityType, entityId, msg.sender);
+        
+        return documentId;
     }
     
-    function verifyDocument(bytes32 documentHash) 
-        external 
-        onlyRole(ADMIN_ROLE) 
-    {
-        require(documents[documentHash].timestamp != 0, "Document does not exist");
-        documents[documentHash].verified = true;
-        emit DocumentVerified(documentHash, msg.sender);
+    function verifyDocument(uint256 documentId) external onlyOwner {
+        require(documentId > 0 && documentId <= documentCount, "Document does not exist");
+        require(!documents[documentId].verified, "Already verified");
+        require(!documents[documentId].revoked, "Document revoked");
+        
+        documents[documentId].verified = true;
+        documents[documentId].verifier = msg.sender;
+        
+        emit DocumentVerified(documentId, msg.sender);
     }
     
-    function getDocument(bytes32 documentHash) 
+    function revokeDocument(uint256 documentId, string calldata reason) external onlyOwner {
+        require(documentId > 0 && documentId <= documentCount, "Document does not exist");
+        require(!documents[documentId].revoked, "Already revoked");
+        
+        documents[documentId].revoked = true;
+        documents[documentId].revokeReason = reason;
+        
+        emit DocumentRevoked(documentId, msg.sender, reason);
+    }
+    
+    function getDocument(uint256 documentId) external view returns (Document memory) {
+        require(documentId > 0 && documentId <= documentCount, "Document does not exist");
+        return documents[documentId];
+    }
+    
+    function getDocumentsByEntity(string calldata entityType, uint256 entityId) 
         external 
         view 
-        returns (Document memory) 
+        returns (uint256[] memory) 
     {
-        return documents[documentHash];
+        return entityDocuments[entityType][entityId];
     }
     
-    function getSPVDocuments(uint256 spvId) 
+    function getDocumentsByUploader(address uploader) 
         external 
         view 
-        returns (bytes32[] memory) 
+        returns (uint256[] memory) 
     {
-        return spvDocuments[spvId];
+        return uploaderDocuments[uploader];
     }
     
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyRole(ADMIN_ROLE)
-        override
-    {}
+    function pause() external onlyOwner {
+        _pause();
+    }
+    
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 }
