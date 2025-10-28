@@ -1,315 +1,583 @@
-# 🚀 RWA DeFi Platform - 后续行动计划
+# Next Actions - RWA DeFi Platform
 
-**创建日期**: 2025-10-28  
-**优先级**: 高到低排序
-
----
-
-## 🔴 立即执行 (今天-明天)
-
-### 1. 创建项目总结文档 ✅
-**时间**: 30分钟  
-**负责人**: 开发团队  
-**输出**: 
-- ✅ PROJECT_COMPLETION_REPORT.md
-- ✅ FEATURE_COMPLETION_STATUS.md
-- ✅ QUICK_REFERENCE.md
-- ✅ PROJECT_ENHANCEMENT_PLAN.md
-
-### 2. 创建启动脚本和验证工具 ✅
-**时间**: 1小时  
-**输出**:
-- ✅ scripts/validate-setup.sh
-- ✅ scripts/setup-project.sh
-- ⚠️ START_HERE.md (待创建)
-
-### 3. 生成最终项目报告
-**时间**: 1小时  
-**任务**:
-- [ ] 汇总所有完成的工作
-- [ ] 列出所有已知问题
-- [ ] 提供清晰的下一步指引
-- [ ] 创建视觉化的进度图表
+**Date**: October 28, 2025  
+**Current Status**: 90% Complete  
+**Next Milestone**: Testnet Deployment
 
 ---
 
-## 🟡 本周任务 (2-3天)
+## 🎯 Immediate Actions (This Week)
 
-### 4. 修复失败的测试
-**优先级**: 🔴 高  
-**时间**: 4-6小时  
+### 1. Testnet Deployment (Priority: CRITICAL)
 
-#### 4.1 修复 LendingPool 测试
-- [ ] 添加 initialize 函数到合约
-- [ ] 更新测试用例
-- [ ] 验证所有测试通过
+**Owner**: Smart Contract Team  
+**Duration**: 2-3 days  
+**Status**: Ready to Execute
 
-#### 4.2 修复 TrancheFactory 测试
-- [ ] 检查初始化参数
-- [ ] 修复测试设置
-- [ ] 验证测试通过
+#### Steps:
 
-#### 4.3 修复 Vault 测试
-- [ ] 检查初始化参数数量
-- [ ] 更新测试调用
-- [ ] 验证测试通过
+```bash
+# 1. Prepare environment
+cd packages/contracts
+cp .env.production.example .env.sepolia
+# Edit .env.sepolia with Sepolia RPC and deployer key
 
-#### 4.4 修复 PermissionedToken 股息测试
-- [ ] 检查转账限制逻辑
-- [ ] 修复白名单设置
-- [ ] 验证测试通过
+# 2. Compile contracts
+npm run compile
 
-**成功标准**: 所有28个测试100%通过
+# 3. Run final tests
+npm run test
 
----
+# 4. Deploy to Sepolia
+npx hardhat run scripts/deploy-production.ts --network sepolia
 
-### 5. 生成 API 文档
-**优先级**: 🟡 中  
-**时间**: 2-3小时  
+# 5. Verify contracts
+npx hardhat run scripts/verify-contracts.ts --network sepolia
 
-#### 5.1 配置 Swagger
-- [ ] 安装 @nestjs/swagger
-- [ ] 配置 SwaggerModule
-- [ ] 添加 API 装饰器
+# 6. Document addresses
+# Save output to deployments/sepolia.json
+```
 
-#### 5.2 生成文档
-- [ ] 为所有端点添加描述
-- [ ] 添加请求/响应示例
-- [ ] 生成 OpenAPI JSON
+#### Verification Checklist:
 
-#### 5.3 创建 Postman Collection
-- [ ] 导出 OpenAPI 规范
-- [ ] 导入到 Postman
-- [ ] 添加环境变量
-- [ ] 测试所有端点
+- [ ] All 9 contracts deployed successfully
+- [ ] All contracts verified on Etherscan
+- [ ] Deployment addresses documented
+- [ ] Timelock configured with correct delay
+- [ ] Multi-sig wallet set up
+- [ ] Contract ownership transferred
+- [ ] Test transactions executed
+- [ ] Events emitted correctly
+- [ ] Gas costs documented
 
-**输出**: 
-- Swagger UI: http://localhost:3000/api/docs
-- postman-collection.json
+#### Expected Outcomes:
+
+- Deployment addresses file: `deployments/sepolia.json`
+- Etherscan verification links
+- Gas cost report
+- Initial test transaction hashes
 
 ---
 
-### 6. 配置监控仪表板
-**优先级**: 🟡 中  
-**时间**: 3-4小时  
+### 2. Integration Testing (Priority: CRITICAL)
 
-#### 6.1 创建 Grafana 仪表板
-- [ ] 合约层仪表板
-- [ ] 业务层仪表板
-- [ ] ML层仪表板
-- [ ] 系统概览仪表板
+**Owner**: QA Team  
+**Duration**: 1 week  
+**Status**: Test Plan Ready
 
-#### 6.2 配置告警规则
-- [ ] Oracle数据过期告警
-- [ ] 高违约率告警
-- [ ] 交易失败告警
-- [ ] 系统健康告警
+#### Test Scenarios:
 
-#### 6.3 配置通知
-- [ ] Slack集成
-- [ ] 邮件通知
-- [ ] 应用内通知
+**Day 1-2: Smart Contract Integration**
+```bash
+# Run integration tests
+cd packages/contracts
+npm run test:integration -- --network sepolia
 
-**输出**: 
-- 4个Grafana仪表板
-- 告警规则配置文件
+# Test scenarios:
+- Token minting flow
+- SPV creation and property addition
+- Vault deposit and withdrawal
+- AMM swap operations
+- Lending pool borrow/repay
+- Oracle price updates
+- Document registry
+```
 
----
+**Day 3-4: Backend Integration**
+```bash
+# Update backend with testnet addresses
+cd packages/backend
+# Edit .env with Sepolia contract addresses
 
-## 🟢 本月任务 (1-2周)
+# Run E2E tests
+npm run test:e2e
 
-### 7. 实现二级市场订单簿
-**优先级**: 🟡 中  
-**时间**: 5-7天  
+# Test scenarios:
+- User registration and KYC
+- SPV management
+- Token operations via Fireblocks
+- Payment processing
+- Document upload to IPFS
+- Blockchain event listening
+```
 
-#### 7.1 数据库模型
-- [ ] Order模型
-- [ ] Trade模型
-- [ ] 索引优化
+**Day 5-6: Frontend Integration**
+```bash
+# Update frontend with testnet config
+cd rwa-defi-platform
+# Edit src/config/contracts.json
 
-#### 7.2 匹配引擎
-- [ ] 订单簿数据结构
-- [ ] 匹配算法
-- [ ] 部分成交处理
+# Manual testing:
+- Wallet connection
+- User onboarding flow
+- Property browsing and investment
+- DeFi operations (vault, AMM, lending)
+- Admin panel operations
+- Document management
+```
 
-#### 7.3 API端点
-- [ ] POST /api/marketplace/order
-- [ ] GET /api/marketplace/orderbook
-- [ ] WebSocket实时更新
+**Day 7: Full End-to-End**
+```
+Complete user journey:
+1. User registers → KYC → Wallet connect
+2. Admin creates SPV → Adds property → Uploads docs
+3. Admin mints tokens → Distributes to investors
+4. User invests → Views portfolio → Receives dividends
+5. User uses DeFi features (vault, AMM, lending)
+6. User redeems tokens → Receives payment
+```
 
-#### 7.4 前端界面
-- [ ] 订单簿显示
-- [ ] 下单表单
-- [ ] 交易历史
+#### Test Report Template:
 
-**输出**: 完整的二级市场功能
+```markdown
+# Integration Test Report
 
----
+## Summary
+- Total Tests: X
+- Passed: Y
+- Failed: Z
+- Pass Rate: Y/X %
 
-### 8. 实现税务报告服务
-**优先级**: 🟡 中  
-**时间**: 3-5天  
+## Failed Tests
+1. Test Name
+   - Expected: ...
+   - Actual: ...
+   - Root Cause: ...
+   - Fix: ...
 
-#### 8.1 成本基础追踪
-- [ ] FIFO方法
-- [ ] LIFO方法
-- [ ] 平均成本法
+## Performance Metrics
+- Average API Response Time: Xms
+- Smart Contract Gas Costs: X gwei
+- Frontend Load Time: Xs
 
-#### 8.2 报告生成
-- [ ] US Form 1099
-- [ ] 其他司法管辖区模板
-- [ ] PDF生成
+## Issues Found
+1. [Critical] Issue description
+2. [High] Issue description
+3. [Medium] Issue description
 
-#### 8.3 API和UI
-- [ ] GET /api/accounting/yearly-report
-- [ ] 报告请求界面
-- [ ] 报告下载页面
-
-**输出**: 税务报告功能
-
----
-
-### 9. 安全审计准备
-**优先级**: 🔴 高  
-**时间**: 1周  
-
-#### 9.1 运行静态分析
-- [ ] Slither分析
-- [ ] Mythril分析
-- [ ] 修复发现的问题
-
-#### 9.2 准备审计文档
-- [ ] 架构文档
-- [ ] 合约说明
-- [ ] 已知问题列表
-- [ ] 测试报告
-
-#### 9.3 代码审查
-- [ ] 内部代码审查
-- [ ] 修复代码问题
-- [ ] 更新文档
-
-**输出**: 审计准备包
+## Recommendations
+- ...
+```
 
 ---
 
-### 10. 测试网部署
-**优先级**: 🔴 高  
-**时间**: 2-3天  
+### 3. Security Audit Engagement (Priority: HIGH)
 
-#### 10.1 部署智能合约
-- [ ] 部署到Sepolia
-- [ ] 验证合约
-- [ ] 配置参数
+**Owner**: CTO  
+**Duration**: 1 day to engage, 3-4 weeks for audit  
+**Status**: Documentation Ready
 
-#### 10.2 部署后端服务
-- [ ] 配置测试环境
-- [ ] 部署到云服务
-- [ ] 配置数据库
+#### Recommended Audit Firms:
 
-#### 10.3 部署前端
-- [ ] 构建生产版本
-- [ ] 部署到Vercel/Netlify
-- [ ] 配置域名
+**Option 1: OpenZeppelin (Recommended)**
+- Website: https://openzeppelin.com/security-audits/
+- Cost: $40k-$80k
+- Timeline: 3-4 weeks
+- Strengths: Solidity experts, DeFi experience
+- Contact: security@openzeppelin.com
 
-#### 10.4 端到端测试
-- [ ] 测试完整用户流程
-- [ ] 测试所有功能
-- [ ] 修复发现的问题
+**Option 2: Trail of Bits**
+- Website: https://www.trailofbits.com/
+- Cost: $50k-$100k
+- Timeline: 4-6 weeks
+- Strengths: Formal verification, comprehensive
+- Contact: info@trailofbits.com
 
-**输出**: 测试网环境
+**Option 3: Consensys Diligence**
+- Website: https://consensys.net/diligence/
+- Cost: $45k-$90k
+- Timeline: 4-6 weeks
+- Strengths: Ethereum ecosystem, tools
+- Contact: diligence@consensys.net
 
----
+#### Engagement Steps:
 
-## 📅 时间线
+1. **Initial Contact** (Day 1)
+   ```
+   Email template:
+   
+   Subject: Security Audit Request - RWA DeFi Platform
+   
+   Dear [Firm],
+   
+   We are seeking a comprehensive security audit for our RWA DeFi platform.
+   
+   Project Details:
+   - 9 Solidity smart contracts (~2,680 lines)
+   - DeFi protocols: Token, Vault, AMM, Lending
+   - Governance: Timelock, Multi-sig
+   - Test coverage: 91.9%
+   
+   Timeline: Need to complete by December 15, 2025
+   Budget: $40k-$80k
+   
+   Documentation: [Link to SECURITY_AUDIT_PREP.md]
+   Repository: [GitHub link]
+   
+   Please provide:
+   - Availability
+   - Cost estimate
+   - Timeline
+   - Audit scope
+   
+   Best regards,
+   [Your Name]
+   ```
 
-### Week 1 (2025-10-28 - 2025-11-03)
-- ✅ Day 1: 项目总结和文档
-- 🎯 Day 2-3: 修复测试
-- 🎯 Day 4: API文档
-- �� Day 5: 监控配置
+2. **Kickoff Meeting** (Week 1)
+   - Review scope and timeline
+   - Provide access to repository
+   - Share documentation
+   - Establish communication channel
 
-### Week 2 (2025-11-04 - 2025-11-10)
-- 🎯 Day 1-3: 二级市场实现
-- 🎯 Day 4-5: 税务报告实现
+3. **Audit Process** (Week 2-4)
+   - Daily check-ins
+   - Answer auditor questions
+   - Provide clarifications
+   - Review preliminary findings
 
-### Week 3 (2025-11-11 - 2025-11-17)
-- 🎯 Day 1-3: 安全审计准备
-- 🎯 Day 4-5: 测试网部署
-
-### Week 4 (2025-11-18 - 2025-11-24)
-- 🎯 测试网测试和优化
-- 🎯 准备安全审计
-
----
-
-## 📊 成功指标
-
-### 技术指标
-- [ ] 测试覆盖率 > 80%
-- [ ] 所有测试通过
-- [ ] API响应时间 < 200ms
-- [ ] 零安全漏洞
-
-### 功能指标
-- [ ] 所有核心功能可用
-- [ ] 用户流程完整
-- [ ] 文档完整
-- [ ] 监控配置完整
-
-### 部署指标
-- [ ] 测试网成功部署
-- [ ] 端到端测试通过
-- [ ] 性能测试通过
-- [ ] 安全审计准备完成
-
----
-
-## 🎯 最终目标
-
-**短期目标 (1个月)**:
-- 完成所有测试
-- 部署到测试网
-- 完成安全审计准备
-
-**中期目标 (3个月)**:
-- 通过安全审计
-- 实现Phase 2关键功能
-- 准备生产部署
-
-**长期目标 (6个月)**:
-- 生产环境上线
-- 用户增长
-- 功能迭代
+4. **Remediation** (Week 5-6)
+   - Fix critical and high issues
+   - Re-test all changes
+   - Submit for re-review
+   - Obtain final report
 
 ---
 
-## 📝 检查清单
+## 📅 Detailed Timeline
 
-### 开发完成检查
-- [x] 所有核心功能实现
-- [x] 代码质量良好
-- [ ] 测试覆盖充分
-- [ ] 文档完整
-- [ ] 性能优化
+### Week 1 (Oct 28 - Nov 3)
 
-### 部署准备检查
-- [x] 环境配置完整
-- [x] Docker镜像构建
-- [x] K8s配置完整
-- [ ] 监控配置完整
-- [ ] 备份策略制定
+**Monday-Tuesday**: Testnet Deployment
+- Deploy all contracts
+- Verify on Etherscan
+- Configure governance
+- Document addresses
 
-### 安全检查
-- [ ] 静态分析通过
-- [ ] 渗透测试通过
-- [ ] 审计准备完成
-- [x] 访问控制完整
-- [x] 数据加密实现
+**Wednesday-Friday**: Integration Testing Begins
+- Smart contract integration tests
+- Backend integration tests
+- Document issues
+
+**Parallel**: Security Audit Engagement
+- Contact audit firms
+- Schedule kickoff meetings
+- Prepare materials
+
+### Week 2 (Nov 4-10)
+
+**Monday-Wednesday**: Integration Testing Continues
+- Frontend integration tests
+- End-to-end testing
+- Performance testing
+
+**Thursday-Friday**: Issue Resolution
+- Fix identified bugs
+- Re-test fixes
+- Update documentation
+
+**Parallel**: Security Audit Kickoff
+- Kickoff meeting with auditor
+- Provide repository access
+- Answer initial questions
+
+### Week 3-4 (Nov 11-24)
+
+**Security Audit in Progress**
+- Daily communication with auditors
+- Answer questions promptly
+- Review preliminary findings
+- Begin fixing critical issues
+
+**Parallel**: Performance Optimization
+- Load testing
+- Database optimization
+- API response time improvements
+- Frontend performance tuning
+
+### Week 5-6 (Nov 25 - Dec 8)
+
+**Audit Remediation**
+- Fix all critical and high issues
+- Fix medium issues if time permits
+- Re-test all changes
+- Submit for re-review
+
+**Parallel**: Mainnet Preparation
+- Prepare deployment scripts
+- Configure production environment
+- Train operations team
+- Prepare monitoring dashboards
+
+### Week 7 (Dec 9-15)
+
+**Final Audit Review**
+- Receive final audit report
+- Address any remaining issues
+- Obtain audit approval
+- Publish audit report
+
+**Mainnet Deployment Preparation**
+- Final testing on testnet
+- Deployment rehearsal
+- Go/no-go decision meeting
+- Prepare announcement
+
+### Week 8 (Dec 16-22)
+
+**Mainnet Deployment**
+- Deploy contracts to mainnet
+- Verify contracts
+- Configure monitoring
+- Soft launch with limited users
+
+**Post-Deployment**
+- Monitor system health
+- Check for issues
+- Gather initial feedback
+- Prepare for public launch
+
+### Week 9-10 (Jan 2-13, 2026)
+
+**Public Launch**
+- Marketing campaign
+- User onboarding
+- Community building
+- Feature announcements
 
 ---
 
-**下一步**: 开始执行Week 1的任务！
+## 🚨 Risk Mitigation
 
-**联系人**: 开发团队  
-**更新频率**: 每周更新
+### Risk 1: Testnet Deployment Issues
+
+**Mitigation**:
+- Test deployment on local network first
+- Have rollback plan ready
+- Keep deployer key secure
+- Document all steps
+
+**Contingency**:
+- If deployment fails, debug and retry
+- If contracts have issues, fix and redeploy
+- Budget extra day for unexpected issues
+
+### Risk 2: Security Audit Finds Critical Issues
+
+**Mitigation**:
+- High test coverage (91.9%)
+- Follow best practices
+- Use OpenZeppelin libraries
+- Have experienced developers
+
+**Contingency**:
+- Allocate 2 weeks for remediation
+- Prioritize critical and high issues
+- Consider re-audit if major changes
+- Delay launch if necessary
+
+### Risk 3: Integration Test Failures
+
+**Mitigation**:
+- Comprehensive test plan
+- Experienced QA team
+- Automated testing where possible
+- Clear acceptance criteria
+
+**Contingency**:
+- Allocate extra week for fixes
+- Prioritize critical path issues
+- Consider phased rollout
+- Have rollback procedures
+
+### Risk 4: Performance Issues
+
+**Mitigation**:
+- Load testing before launch
+- Auto-scaling configured
+- Database optimization
+- Caching strategy
+
+**Contingency**:
+- Scale up resources
+- Optimize slow queries
+- Add more caching
+- Implement rate limiting
+
+---
+
+## 📊 Success Metrics
+
+### Testnet Deployment
+
+- [ ] All contracts deployed: 9/9
+- [ ] All contracts verified: 9/9
+- [ ] Gas costs < $500 total
+- [ ] Deployment time < 2 hours
+- [ ] Zero critical issues
+
+### Integration Testing
+
+- [ ] Test pass rate > 95%
+- [ ] Zero critical bugs
+- [ ] < 5 high priority bugs
+- [ ] API response time < 500ms
+- [ ] Frontend load time < 3s
+
+### Security Audit
+
+- [ ] Zero critical vulnerabilities
+- [ ] Zero high vulnerabilities
+- [ ] < 5 medium vulnerabilities
+- [ ] All findings addressed
+- [ ] Audit report published
+
+### Performance
+
+- [ ] Support 1000 concurrent users
+- [ ] API P95 latency < 500ms
+- [ ] Smart contract gas optimized
+- [ ] Database queries < 100ms
+- [ ] Frontend FCP < 1.5s
+
+---
+
+## 💼 Resource Allocation
+
+### Team Assignments
+
+**Smart Contract Team (1 person)**
+- Testnet deployment
+- Audit support
+- Issue remediation
+- Mainnet deployment
+
+**Backend Team (2 people)**
+- Integration testing
+- Bug fixes
+- Performance optimization
+- Fireblocks integration testing
+
+**Frontend Team (1 person)**
+- Integration testing
+- UI/UX improvements
+- Performance optimization
+- User testing
+
+**ML Team (1 person)**
+- Model monitoring
+- Data pipeline testing
+- Performance optimization
+- Documentation
+
+**DevOps Team (1 person)**
+- Infrastructure monitoring
+- Deployment automation
+- Logging configuration
+- Incident response
+
+**QA Team (1 person)**
+- Test execution
+- Bug reporting
+- Test documentation
+- User acceptance testing
+
+---
+
+## 📞 Communication Plan
+
+### Daily Standups
+
+**Time**: 9:00 AM  
+**Duration**: 15 minutes  
+**Attendees**: All team members
+
+**Format**:
+- What did you do yesterday?
+- What will you do today?
+- Any blockers?
+
+### Weekly Status Reports
+
+**Day**: Friday  
+**Time**: 4:00 PM  
+**Attendees**: Team + Stakeholders
+
+**Content**:
+- Progress update
+- Metrics and KPIs
+- Issues and risks
+- Next week's plan
+
+### Incident Response
+
+**Severity Levels**:
+- **P0 (Critical)**: System down, data loss
+  - Response time: Immediate
+  - Escalation: CTO + CEO
+  
+- **P1 (High)**: Major feature broken
+  - Response time: < 1 hour
+  - Escalation: Team lead
+  
+- **P2 (Medium)**: Minor feature issue
+  - Response time: < 4 hours
+  - Escalation: Team member
+  
+- **P3 (Low)**: Cosmetic issue
+  - Response time: < 24 hours
+  - Escalation: None
+
+---
+
+## ✅ Action Items Summary
+
+### This Week (Oct 28 - Nov 3)
+
+- [ ] Deploy contracts to Sepolia testnet
+- [ ] Verify all contracts on Etherscan
+- [ ] Run smart contract integration tests
+- [ ] Run backend integration tests
+- [ ] Contact 3 security audit firms
+- [ ] Schedule audit kickoff meetings
+- [ ] Update project status document
+
+### Next Week (Nov 4-10)
+
+- [ ] Complete frontend integration tests
+- [ ] Execute end-to-end test scenarios
+- [ ] Fix all identified bugs
+- [ ] Kickoff security audit
+- [ ] Begin performance testing
+- [ ] Update documentation
+
+### Following Weeks
+
+- [ ] Security audit in progress
+- [ ] Audit remediation
+- [ ] Performance optimization
+- [ ] Mainnet preparation
+- [ ] Deployment and launch
+
+---
+
+## 📝 Notes
+
+- Keep all stakeholders informed of progress
+- Document all decisions and changes
+- Maintain high code quality standards
+- Prioritize security over speed
+- Test thoroughly before mainnet
+- Have rollback plans ready
+- Monitor system health continuously
+
+---
+
+**Document Owner**: Project Manager  
+**Last Updated**: October 28, 2025  
+**Next Review**: November 4, 2025  
+**Status**: Active
+
+---
+
+**Let's ship this! 🚀**
