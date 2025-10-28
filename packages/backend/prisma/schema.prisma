@@ -42,6 +42,14 @@ enum UserType {
   INSTITUTIONAL
 }
 
+enum Role {
+  USER
+  ADMIN
+  SPV_MANAGER
+  COMPLIANCE_OFFICER
+  AUDITOR
+}
+
 model SPV {
   id                    String     @id @default(uuid())
   companyName           String
@@ -100,8 +108,8 @@ model Document {
   uploadedBy  String
   uploadedAt  DateTime     @default(now())
   
-  spv         SPV?         @relation(fields: [entityId], references: [id])
-  property    Property?    @relation(fields: [entityId], references: [id])
+  spv         SPV?         @relation(fields: [entityId], references: [id], map: "Document_spv_fkey")
+  property    Property?    @relation(fields: [entityId], references: [id], map: "Document_property_fkey")
   
   @@index([entityType, entityId])
   @@index([ipfsHash])
@@ -127,11 +135,13 @@ model Transaction {
   type          TransactionType
   tokenAddress  String
   amount        Decimal
+  price         Decimal?
   fromAddress   String?
   toAddress     String?
   txHash        String?           @unique
   blockNumber   BigInt?
   status        TransactionStatus @default(PENDING)
+  timestamp     DateTime          @default(now())
   createdAt     DateTime          @default(now())
   confirmedAt   DateTime?
   
@@ -184,6 +194,7 @@ model AuditLog {
   userAgent       String?
   requestBody     Json?
   responseStatus  Int
+  details         String?
   timestamp       DateTime @default(now())
   
   user            User?    @relation(fields: [userId], references: [id])
@@ -191,4 +202,137 @@ model AuditLog {
   @@index([userId])
   @@index([timestamp])
   @@index([action])
+}
+
+model Alert {
+  id              String   @id @default(uuid())
+  type            String
+  severity        String
+  message         String
+  metadata        Json?
+  acknowledged    Boolean  @default(false)
+  acknowledgedAt  DateTime?
+  createdAt       DateTime @default(now())
+  
+  @@index([acknowledged])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model BlockchainEvent {
+  id              String   @id @default(uuid())
+  eventType       String
+  contractAddress String
+  blockNumber     BigInt
+  transactionHash String
+  eventData       Json
+  processed       Boolean  @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+  
+  @@index([processed])
+  @@index([eventType])
+  @@index([blockNumber])
+}
+
+model TokenHolding {
+  id              String   @id @default(uuid())
+  userId          String
+  tokenAddress    String
+  balance         Decimal
+  lockedUntil     DateTime?
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, tokenAddress])
+  @@index([userId])
+  @@index([tokenAddress])
+}
+
+model DividendDistribution {
+  id              String   @id @default(uuid())
+  tokenAddress    String
+  totalAmount     Decimal
+  perTokenAmount  Decimal
+  distributionDate DateTime
+  txHash          String?
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+  
+  @@index([tokenAddress])
+  @@index([distributionDate])
+}
+
+model VaultPosition {
+  id              String   @id @default(uuid())
+  userId          String
+  vaultAddress    String
+  shares          Decimal
+  depositedAmount Decimal
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, vaultAddress])
+  @@index([userId])
+  @@index([vaultAddress])
+}
+
+model Loan {
+  id              String   @id @default(uuid())
+  userId          String
+  amount          Decimal
+  collateralAmount Decimal
+  interestRate    Decimal
+  status          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model MLPrediction {
+  id              String   @id @default(uuid())
+  modelType       String
+  inputData       Json
+  predictedValue  Float
+  actualValue     Float?
+  confidence      Float?
+  createdAt       DateTime @default(now())
+  
+  @@index([modelType])
+  @@index([createdAt])
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  userId          String
+  tokenAddress    String
+  orderType       String
+  side            String
+  amount          Decimal
+  price           Decimal?
+  filled          Decimal  @default(0)
+  status          String   @default("OPEN")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([tokenAddress])
+  @@index([status])
+}
+
+model Trade {
+  id              String   @id @default(uuid())
+  buyOrderId      String
+  sellOrderId     String
+  tokenAddress    String
+  amount          Decimal
+  price           Decimal
+  buyerId         String
+  sellerId        String
+  executedAt      DateTime @default(now())
+  
+  @@index([buyOrderId])
+  @@index([sellOrderId])
+  @@index([tokenAddress])
 }

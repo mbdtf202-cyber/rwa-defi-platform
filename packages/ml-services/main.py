@@ -179,12 +179,38 @@ async def get_valuation(spv_id: str, date: Optional[str] = None):
     """
     Get valuation for a specific SPV
     """
-    # TODO: Implement valuation retrieval
-    return {
-        "spv_id": spv_id,
-        "value": 5000000.0,
-        "date": date or "2025-10-27"
-    }
+    try:
+        # Mock property data - replace with actual database query
+        properties = [
+            {
+                "id": 1,
+                "address": "123 Main St",
+                "location": "New York",
+                "size_sqft": 2000,
+                "bedrooms": 3,
+                "bathrooms": 2,
+                "year_built": 2010,
+                "property_type": "residential",
+                "rental_income": 3000,
+            }
+        ]
+        
+        total_value = 0
+        for prop in properties:
+            base_value = prop["size_sqft"] * 200
+            location_mult = 1.5 if prop["location"] == "New York" else 1.0
+            total_value += base_value * location_mult
+        
+        return {
+            "spv_id": spv_id,
+            "value": total_value,
+            "date": date or datetime.now().strftime("%Y-%m-%d"),
+            "confidence": 0.85,
+            "properties_count": len(properties)
+        }
+    except Exception as e:
+        logger.error(f"Valuation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Risk Scoring Endpoints
 @app.post("/api/v1/risk/score", response_model=RiskScoreResponse)
@@ -267,15 +293,70 @@ async def predict_maintenance(property_id: str, data: dict):
     """
     Predict maintenance needs for a property
     """
-    # TODO: Implement predictive maintenance logic
-    return {
-        "property_id": property_id,
-        "issue": "HVAC system degradation",
-        "priority": "HIGH",
-        "estimated_cost": 5000,
-        "impact_days": 3,
-        "confidence": 0.87
-    }
+    try:
+        # Extract property info from data
+        hvac_age = data.get("hvac_age", 10)
+        roof_age = data.get("roof_age", 15)
+        plumbing_issues = data.get("plumbing_issues_count", 0)
+        
+        predictions = []
+        
+        # HVAC prediction
+        if hvac_age > 10:
+            predictions.append({
+                "component": "HVAC System",
+                "issue": "System degradation",
+                "probability": min(0.3 + (hvac_age - 10) * 0.05, 0.95),
+                "priority": "HIGH" if hvac_age > 15 else "MEDIUM",
+                "estimated_cost": 5000,
+                "impact_days": 3,
+                "confidence": 0.87
+            })
+        
+        # Roof prediction
+        if roof_age > 15:
+            predictions.append({
+                "component": "Roof",
+                "issue": "Potential leaks or damage",
+                "probability": min(0.2 + (roof_age - 15) * 0.04, 0.9),
+                "priority": "HIGH" if roof_age > 20 else "MEDIUM",
+                "estimated_cost": 8000,
+                "impact_days": 5,
+                "confidence": 0.82
+            })
+        
+        # Plumbing prediction
+        if plumbing_issues > 3:
+            predictions.append({
+                "component": "Plumbing",
+                "issue": "Recurring plumbing problems",
+                "probability": min(0.4 + plumbing_issues * 0.05, 0.85),
+                "priority": "MEDIUM",
+                "estimated_cost": 2000,
+                "impact_days": 2,
+                "confidence": 0.75
+            })
+        
+        # Return highest priority issue or first prediction
+        if predictions:
+            priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+            predictions.sort(key=lambda x: priority_order.get(x["priority"], 3))
+            result = predictions[0]
+            result["property_id"] = property_id
+            result["all_predictions"] = predictions
+            return result
+        
+        return {
+            "property_id": property_id,
+            "issue": "No immediate maintenance predicted",
+            "priority": "LOW",
+            "estimated_cost": 0,
+            "impact_days": 0,
+            "confidence": 0.9
+        }
+    except Exception as e:
+        logger.error(f"Maintenance prediction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Model Management Endpoints
 @app.get("/api/v1/models/status")

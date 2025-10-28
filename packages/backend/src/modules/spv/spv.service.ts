@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { CreateSpvDto, UpdateSpvDto, AddPropertyDto, UploadDocumentDto } from './dto';
 import { createHash } from 'crypto';
@@ -9,11 +8,10 @@ import { createHash } from 'crypto';
 export class SpvService {
   constructor(
     private prisma: PrismaService,
-    private httpService: HttpService,
     private configService: ConfigService,
   ) {}
 
-  async createSpv(dto: CreateSpvDto) {
+  async create(dto: CreateSpvDto) {
     // Check if registration number already exists
     const existing = await this.prisma.sPV.findUnique({
       where: { registrationNumber: dto.registrationNumber },
@@ -36,7 +34,9 @@ export class SpvService {
     return spv;
   }
 
-  async getAllSpvs(limit = 50, offset = 0) {
+  async findAll(query: { limit?: number; offset?: number }) {
+    const limit = query.limit || 50;
+    const offset = query.offset || 0;
     const [spvs, total] = await Promise.all([
       this.prisma.sPV.findMany({
         take: limit,
@@ -63,7 +63,7 @@ export class SpvService {
     };
   }
 
-  async getSpvById(id: string) {
+  async findOne(id: string) {
     const spv = await this.prisma.sPV.findUnique({
       where: { id },
       include: {
@@ -87,7 +87,7 @@ export class SpvService {
     return spv;
   }
 
-  async updateSpv(id: string, dto: UpdateSpvDto) {
+  async update(id: string, dto: UpdateSpvDto) {
     const spv = await this.prisma.sPV.update({
       where: { id },
       data: dto,
@@ -212,6 +212,22 @@ export class SpvService {
     });
 
     return newValuation;
+  }
+
+  async remove(id: string) {
+    const spv = await this.prisma.sPV.findUnique({
+      where: { id },
+    });
+
+    if (!spv) {
+      throw new NotFoundException('SPV not found');
+    }
+
+    await this.prisma.sPV.delete({
+      where: { id },
+    });
+
+    return { message: 'SPV deleted successfully' };
   }
 
   private async uploadToIPFS(file: Buffer): Promise<string> {

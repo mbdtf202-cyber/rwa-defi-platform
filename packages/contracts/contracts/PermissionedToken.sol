@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title PermissionedToken
@@ -193,7 +194,7 @@ contract PermissionedToken is
         require(supply > 0, "No tokens in circulation");
         
         // Transfer dividend tokens to this contract
-        IERC20Upgradeable(dividendToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(dividendToken).transferFrom(msg.sender, address(this), amount);
         
         // Update dividends per token
         totalDividendsPerToken[dividendToken] += (amount * 1e18) / supply;
@@ -216,7 +217,7 @@ contract PermissionedToken is
         require(claimable > 0, "No dividends to claim");
         
         dividendBalance[msg.sender][dividendToken] = owed;
-        IERC20Upgradeable(dividendToken).transfer(msg.sender, claimable);
+        IERC20(dividendToken).transfer(msg.sender, claimable);
         
         emit DividendsClaimed(msg.sender, dividendToken, claimable);
     }
@@ -262,9 +263,9 @@ contract PermissionedToken is
     }
     
     /**
-     * @dev Hook that is called before any transfer of tokens
+     * @dev Hook that is called before any transfer of tokens (OpenZeppelin v5)
      */
-    function _beforeTokenTransfer(
+    function _update(
         address from,
         address to,
         uint256 amount
@@ -287,7 +288,7 @@ contract PermissionedToken is
             }
         }
         
-        super._beforeTokenTransfer(from, to, amount);
+        super._update(from, to, amount);
     }
     
     /**

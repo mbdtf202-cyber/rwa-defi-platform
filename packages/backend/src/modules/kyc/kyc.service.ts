@@ -179,28 +179,28 @@ export class KycService {
     };
   }
 
-  private parseOnfidoWebhook(payload: any) {
+  private parseOnfidoWebhook(payload: any): { userId: string; status: 'APPROVED' | 'REJECTED'; kycHash: string } {
     // Parse Onfido webhook payload
     const userId = payload.resource?.applicant_id || 'unknown';
-    const status = payload.resource?.status === 'complete' ? 'APPROVED' : 'REJECTED';
+    const status: 'APPROVED' | 'REJECTED' = payload.resource?.status === 'complete' ? 'APPROVED' : 'REJECTED';
     const kycHash = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
     return { userId, status, kycHash };
   }
 
-  private parsePersonaWebhook(payload: any) {
+  private parsePersonaWebhook(payload: any): { userId: string; status: 'APPROVED' | 'REJECTED'; kycHash: string } {
     // Parse Persona webhook payload
     const userId = payload.data?.id || 'unknown';
-    const status = payload.data?.attributes?.status === 'approved' ? 'APPROVED' : 'REJECTED';
+    const status: 'APPROVED' | 'REJECTED' = payload.data?.attributes?.status === 'approved' ? 'APPROVED' : 'REJECTED';
     const kycHash = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
     return { userId, status, kycHash };
   }
 
-  private parseSumsubWebhook(payload: any) {
+  private parseSumsubWebhook(payload: any): { userId: string; status: 'APPROVED' | 'REJECTED'; kycHash: string } {
     // Parse Sumsub webhook payload
     const userId = payload.applicantId || 'unknown';
-    const status = payload.reviewStatus === 'completed' ? 'APPROVED' : 'REJECTED';
+    const status: 'APPROVED' | 'REJECTED' = payload.reviewStatus === 'completed' ? 'APPROVED' : 'REJECTED';
     const kycHash = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
     return { userId, status, kycHash };

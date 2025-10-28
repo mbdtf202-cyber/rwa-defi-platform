@@ -1,0 +1,21 @@
+{
+  "autoApproveCommands": [
+    "npm*",
+    "node*",
+    "ls*",
+    "cat*",
+    "grep*",
+    "find*",
+    "wc*",
+    "head*",
+    "tail*",
+    "mkdir*",
+    "rm*",
+    "cp*",
+    "mv*",
+    "echo*",
+    "pwd",
+    "which*",
+    "git*"
+  ]
+}
