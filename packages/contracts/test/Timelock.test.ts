@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Timelock } from "../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Timelock", function () {
@@ -12,9 +12,9 @@ describe("Timelock", function () {
   let user: SignerWithAddress;
 
   const DELAY = 2 * 24 * 60 * 60; // 2 days
-  const PROPOSER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PROPOSER_ROLE"));
-  const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
-  const CANCELLER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("CANCELLER_ROLE"));
+  const PROPOSER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("PROPOSER_ROLE"));
+  const EXECUTOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("EXECUTOR_ROLE"));
+  const CANCELLER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("CANCELLER_ROLE"));
 
   beforeEach(async function () {
     [admin, proposer, executor, user] = await ethers.getSigners();
@@ -26,7 +26,7 @@ describe("Timelock", function () {
       [executor.address],
       admin.address
     );
-    await timelock.deployed();
+    await timelock.waitForDeployment();
   });
 
   describe("Deployment", function () {

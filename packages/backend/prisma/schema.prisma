@@ -45,6 +45,7 @@ enum UserType {
 enum Role {
   USER
   ADMIN
+  ISSUER
   SPV_MANAGER
   COMPLIANCE_OFFICER
   AUDITOR

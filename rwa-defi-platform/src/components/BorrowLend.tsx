@@ -47,7 +47,8 @@ export default function BorrowLend() {
     }
   };
 
-  const handleRepay = async () {{
+  const handleRepay = async () => {
+    if (!repayAmount || parseFloat(repayAmount) <= 0) {
       addNotification('error', 'Please enter repay amount');
       return;
     }

@@ -21,7 +21,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '../../.env',
     }),
     BullModule.forRoot({
       redis: {
