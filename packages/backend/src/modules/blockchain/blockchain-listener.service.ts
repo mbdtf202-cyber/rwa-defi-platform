@@ -20,7 +20,11 @@ export class BlockchainListenerService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.setupListeners();
+    try {
+      await this.setupListeners();
+    } catch (error) {
+      this.logger.warn('Blockchain listeners not initialized (contracts not deployed yet)');
+    }
   }
 
   private async setupListeners() {
@@ -33,6 +37,11 @@ export class BlockchainListenerService implements OnModuleInit {
 
   private async listenToPermissionedToken() {
     const address = this.configService.get<string>('PERMISSIONED_TOKEN_ADDRESS');
+    if (!address) {
+      this.logger.warn('PermissionedToken address not configured, skipping listener');
+      return;
+    }
+    
     const abi = [
       'event Transfer(address indexed from, address indexed to, uint256 value)',
       'event DividendDistributed(address indexed token, uint256 amount, uint256 timestamp)',
@@ -86,6 +95,11 @@ export class BlockchainListenerService implements OnModuleInit {
 
   private async listenToVault() {
     const address = this.configService.get<string>('VAULT_ADDRESS');
+    if (!address) {
+      this.logger.warn('Vault address not configured, skipping listener');
+      return;
+    }
+    
     const abi = [
       'event Deposit(address indexed user, uint256 amount, uint256 shares)',
       'event Withdraw(address indexed user, uint256 amount, uint256 shares)',
@@ -129,6 +143,11 @@ export class BlockchainListenerService implements OnModuleInit {
 
   private async listenToTrancheFactory() {
     const address = this.configService.get<string>('TRANCHE_FACTORY_ADDRESS');
+    if (!address) {
+      this.logger.warn('TrancheFactory address not configured, skipping listener');
+      return;
+    }
+    
     const abi = [
       'event TrancheCreated(uint256 indexed spvId, address[] trancheTokens, uint8[] priorities)',
       'event CashflowDistributed(uint256 indexed spvId, uint256 amount, uint256 timestamp)',
@@ -173,6 +192,11 @@ export class BlockchainListenerService implements OnModuleInit {
 
   private async listenToSPVRegistry() {
     const address = this.configService.get<string>('SPV_REGISTRY_ADDRESS');
+    if (!address) {
+      this.logger.warn('SPVRegistry address not configured, skipping listener');
+      return;
+    }
+    
     const abi = [
       'event SPVRegistered(uint256 indexed spvId, address indexed owner, string name)',
       'event PropertyAdded(uint256 indexed spvId, uint256 indexed propertyId, string propertyAddress)',
