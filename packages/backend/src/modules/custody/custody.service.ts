@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FireblocksSDK, PeerType, TransactionOperation, TransactionStatus } from 'fireblocks-sdk';
@@ -12,8 +12,8 @@ export class CustodyService {
   private vaultAccountId: string;
 
   constructor(
-    private configService: ConfigService,
-    private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
   ) {
     this.initializeFireblocks();
   }

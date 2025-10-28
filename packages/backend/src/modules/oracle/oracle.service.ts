@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -12,9 +12,9 @@ export class OracleService {
   private wallet: ethers.Wallet;
 
   constructor(
-    private prisma: PrismaService,
-    private httpService: HttpService,
-    private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(HttpService) private httpService: HttpService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {
     const rpcUrl = this.configService.get<string>('RPC_URL') || 'http://localhost:8545';
     this.provider = new ethers.JsonRpcProvider(rpcUrl);

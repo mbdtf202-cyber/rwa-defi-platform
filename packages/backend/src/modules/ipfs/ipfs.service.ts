@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import { create, IPFSHTTPClient } from 'ipfs-http-client';
 import * as crypto from 'crypto';
@@ -8,7 +8,7 @@ export class IpfsService {
   private readonly logger = new Logger(IpfsService.name);
   // private client: IPFSHTTPClient;
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
     const ipfsUrl = this.configService.get<string>('IPFS_URL') || 'http://localhost:5001';
     // this.client = create({ url: ipfsUrl });
     this.logger.log(`IPFS client initialized (MOCK MODE): ${ipfsUrl}`);

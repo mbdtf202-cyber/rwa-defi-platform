@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ethers } from 'ethers';
@@ -10,8 +10,8 @@ export class TokenService {
   private wallet: ethers.Wallet;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {
     // Initialize blockchain connection
     const rpcUrl = this.configService.get<string>('RPC_URL') || 'http://localhost:8545';

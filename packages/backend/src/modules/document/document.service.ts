@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { IpfsService } from '../ipfs/ipfs.service';
 import { ethers } from 'ethers';
@@ -6,21 +7,26 @@ import { ethers } from 'ethers';
 @Injectable()
 export class DocumentService {
   private provider: ethers.JsonRpcProvider;
-  private contract: ethers.Contract;
+  private contract: ethers.Contract | null = null;
 
   constructor(
-    private prisma: PrismaService,
-    private ipfsService: IpfsService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(IpfsService) private ipfsService: IpfsService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {
-    this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    const contractAddress = process.env.DOCUMENT_REGISTRY_ADDRESS;
-    const abi = [
-      'function storeDocument(bytes32 documentHash, bytes32 ipfsHash, uint256 spvId, string documentType)',
-      'function verifyDocument(bytes32 documentHash)',
-      'function getDocument(bytes32 documentHash) view returns (tuple(bytes32 ipfsHash, uint256 spvId, string documentType, uint256 timestamp, address uploader, bool verified))',
-      'function getSPVDocuments(uint256 spvId) view returns (bytes32[])',
-    ];
-    this.contract = new ethers.Contract(contractAddress, abi, this.provider);
+    const rpcUrl = this.configService.get<string>('RPC_URL') || 'http://localhost:8545';
+    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    
+    const contractAddress = this.configService.get<string>('DOCUMENT_REGISTRY_ADDRESS');
+    if (contractAddress) {
+      const abi = [
+        'function storeDocument(bytes32 documentHash, bytes32 ipfsHash, uint256 spvId, string documentType)',
+        'function verifyDocument(bytes32 documentHash)',
+        'function getDocument(bytes32 documentHash) view returns (tuple(bytes32 ipfsHash, uint256 spvId, string documentType, uint256 timestamp, address uploader, bool verified))',
+        'function getSPVDocuments(uint256 spvId) view returns (bytes32[])',
+      ];
+      this.contract = new ethers.Contract(contractAddress, abi, this.provider);
+    }
   }
 
   async uploadDocument(

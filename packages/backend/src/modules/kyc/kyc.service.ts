@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -8,9 +8,9 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class KycService {
   constructor(
-    private prisma: PrismaService,
-    private httpService: HttpService,
-    private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(HttpService) private httpService: HttpService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {}
 
   async startKyc(userId: string, provider: 'ONFIDO' | 'PERSONA' | 'SUMSUB' = 'ONFIDO') {

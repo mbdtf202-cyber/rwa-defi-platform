@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ethers } from 'ethers';
 import { InjectQueue } from '@nestjs/bull';
@@ -11,7 +11,7 @@ export class BlockchainListenerService implements OnModuleInit {
   private contracts: Map<string, ethers.Contract> = new Map();
 
   constructor(
-    private configService: ConfigService,
+    @Inject(ConfigService) private configService: ConfigService,
     @InjectQueue('blockchain-events') private eventQueue: Queue,
   ) {
     this.provider = new ethers.JsonRpcProvider(

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateSpvDto, UpdateSpvDto, AddPropertyDto, UploadDocumentDto } from './dto';
@@ -7,8 +7,8 @@ import { createHash } from 'crypto';
 @Injectable()
 export class SpvService {
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {}
 
   async create(dto: CreateSpvDto) {

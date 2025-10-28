@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TokenService } from '../token/token.service';
@@ -10,9 +10,9 @@ export class PaymentService {
   private stripe: Stripe;
 
   constructor(
-    private prisma: PrismaService,
-    private tokenService: TokenService,
-    private configService: ConfigService,
+    @Inject(PrismaService) private prisma: PrismaService,
+    @Inject(TokenService) private tokenService: TokenService,
+    @Inject(ConfigService) private configService: ConfigService,
   ) {
     const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (stripeKey) {
